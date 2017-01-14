@@ -3,6 +3,7 @@
 import json, urllib2, sys, os
 from argparse import ArgumentParser
 from collections import defaultdict
+import base64 #paway 2017/01/14 to support basic auth.
 
 parser = ArgumentParser()
 parser.add_argument('-c', '--cookie', help='use cookies', type=str, 
@@ -57,13 +58,16 @@ if opts.host:
 if opts.secret:
 	aria2opts['rpc-secret'] = opts.secret
 
-if not opts.secret and opts.user and opts.passwd:
-	aria2opts['rpc-user'] = opts.user
-	aria2opts['rpc-passwd'] = opts.pw
+if not opts.secret and opts.user and opts.pw: #paway 2017/01/14 to support basic auth.
+	base64string = base64.b64encode('{}:{}'.format(opts.user, opts.pw))
+	request = urllib2.Request(opts.rpc, headers = {'Authorization': 'Basic {}'.format(base64string)})
+else:
+	request = urllib2.Request(opts.rpc)
+	
 
 jsondict['params'].append(aria2opts)
 
 jsonreq = json.dumps(jsondict)
 #print jsonreq
 
-print urllib2.urlopen(opts.rpc, jsonreq).read()
+print urllib2.urlopen(request, jsonreq).read() #paway 2017/01/14 to support basic auth.
